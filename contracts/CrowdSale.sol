@@ -173,4 +173,9 @@ contract CrowdSale is Context, Ownable {
     );
     emit TokenSold(_msgSender(), _withdrawalList[_msgSender()]._amount);
   }
+
+  function tokensToBeReceived(uint256 _amount) public returns (uint256) {
+    uint256 _tbr = (_amount * (_amount / _rate)) / rate;
+    return _tbr * 10**18;
+  }
 }
