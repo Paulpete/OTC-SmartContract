@@ -176,13 +176,23 @@ contract CrowdSale is Context, Ownable {
     emit TokenSold(_msgSender(), _withdrawalList[_msgSender()]._amount);
   }
 
-  function tokensToBeReceived(uint256 _amount) public pure returns (uint256) {
-    uint256 _tbr = (_amount * (_amount / _rate)) / rate;
+  function tokensToBeReceived(uint256 _amount) public view returns (uint256) {
+    uint256 _tbr = (_amount * (_amount / _rate)) / _rate;
     return _tbr * 10**18;
+  }
+
+  function balance(address _account) public view returns (uint256) {
+    return _withdrawalList[_account]._amount;
   }
 
   function setFundAddress(address fundAddress_) external onlyOwner {
     _fundAddress = payable(fundAddress_);
+  }
+
+  function withdrawBNB() external onlyFundAddress returns (bool) {
+    uint256 bal = address(this).balance;
+    _fundAddress.transfer(bal);
+    return true;
   }
 
   receive() external payable {
