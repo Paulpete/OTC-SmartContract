@@ -41,6 +41,8 @@ contract CrowdSale is Context, Ownable {
   event RateChanged(uint256 newRate);
   event CrowdSaleBegun(uint256 startTime, uint256 endTime);
   event CrowdSaleExtended(uint256 newEndTime);
+  event CrowdSaleFinalized(uint256 timestamp);
+  event TokenSold(address recipient, uint256 amount);
 
   constructor(
     address token_,
@@ -83,8 +85,64 @@ contract CrowdSale is Context, Ownable {
     returns (bool)
   {
     require(!_finalized, "CrowdSale: Sale already finalized");
-    _endTime = _endTime + (_days * 1 days);
+    _endTime = getRemainingDays() + (_days * 1 days);
     emit CrowdSaleExtended(_endTime);
     return true;
+  }
+
+  function _transferRemainingTokens() private returns (bool) {
+    return _token.transfer(_fundAddress, _token.balanceOf(address(this)));
+  }
+
+  function finalizeCrowdSale() external onlyFundAddress returns (bool) {
+    require(!_finalized, "CrowdSale: Sale cannot be finalized twice");
+    require(
+      _transferRemainingTokens(),
+      "CrowdSale: Could not transfer remaining tokens"
+    );
+    _finalized = true;
+    emit CrowdSaleFinalized(block.timestamp);
+    return true;
+  }
+
+  function getRemainingDays() public view returns (uint256) {
+    if (_finalized) return 0;
+
+    uint256 currentTimestamp = block.timestamp;
+
+    if (_endTime > currentTimestamp) return _endTime - currentTimestamp;
+
+    return 0;
+  }
+
+  function buyWithImmediateWithdrawal() public payable notExceed5BNB {
+    require(block.timestamp >= _startTime, "CrowdSale: Sale has not begun yet");
+    require(block.timestamp < _endTime, "CrowdSale: Sale has ended");
+    require(!_finalized, "CrowdSale: Sale has been finalized");
+
+    uint256 _valueAsWei = msg.value * 10**18;
+    uint256 _valueDividedByRate = _valueAsWei / _rate;
+    uint256 _25Percent = (_valueDividedByRate * 25) / 100;
+
+    require(
+      _token.balanceOf(address(this)) >= _25Percent,
+      "CrowdSale: Not enough tokens to sell"
+    );
+    bool _sold = _token.transfer(_msgSender(), _25Percent);
+
+    require(_sold, "CrowdSale: Failed to transfer tokens");
+
+    _incrementRecordAmount(_valueAsWei);
+
+    emit TokenSold(_msgSender(), _25Percent);
+  }
+
+  function buyWithLateWithdrawal() public payable notExceed5BNB {
+    require(block.timestamp >= _startTime, "CrowdSale: Sale has not begun yet");
+    require(block.timestamp < _endTime, "CrowdSale: Sale has ended");
+    require(!_finalized, "CrowdSale: Sale has been finalized");
+
+    uint256 _valueAsWei = msg.value * 10**18;
+    uint256 _valueDividedByRate = _valueAsWei / _rate;
   }
 }
