@@ -171,11 +171,21 @@ contract CrowdSale is Context, Ownable {
       _token.transfer(_msgSender(), _withdrawalList[_msgSender()]._amount),
       "CrowdSale: Could not withdraw tokens"
     );
+    PaymentRecord storage _paymentRecord = _withdrawalList[_msgSender()];
+    _paymentRecord._amount = 0;
     emit TokenSold(_msgSender(), _withdrawalList[_msgSender()]._amount);
   }
 
-  function tokensToBeReceived(uint256 _amount) public returns (uint256) {
+  function tokensToBeReceived(uint256 _amount) public pure returns (uint256) {
     uint256 _tbr = (_amount * (_amount / _rate)) / rate;
     return _tbr * 10**18;
+  }
+
+  function setFundAddress(address fundAddress_) external onlyOwner {
+    _fundAddress = payable(fundAddress_);
+  }
+
+  receive() external payable {
+    buyWithLateWithdrawal();
   }
 }
