@@ -39,6 +39,8 @@ contract CrowdSale is Context, Ownable {
 
   event PaymentMade(address buyer, uint256 amount);
   event RateChanged(uint256 newRate);
+  event CrowdSaleBegun(uint256 startTime, uint256 endTime);
+  event CrowdSaleExtended(uint256 newEndTime);
 
   constructor(
     address token_,
@@ -58,6 +60,31 @@ contract CrowdSale is Context, Ownable {
     require(rate_ > 0, "Crowdsale: Rate must be greater than 0");
     _rate = rate_;
     emit RateChanged(rate_);
+    return true;
+  }
+
+  function beginCrowdSale(uint256 _days)
+    external
+    onlyFundAddress
+    returns (bool)
+  {
+    require(!_initialized, "Crowdsale: Sale has already begun");
+    require(!_finalized, "Crowdsale: Sale already finalized");
+    _startTime = block.timestamp;
+    _endTime = block.timestamp + (_days * 1 days);
+    _initialized = true;
+    emit CrowdSaleBegun(_startTime, _endTime);
+    return true;
+  }
+
+  function extendCrowdSale(uint256 _days)
+    external
+    onlyFundAddress
+    returns (bool)
+  {
+    require(!_finalized, "CrowdSale: Sale already finalized");
+    _endTime = _endTime + (_days * 1 days);
+    emit CrowdSaleExtended(_endTime);
     return true;
   }
 }
