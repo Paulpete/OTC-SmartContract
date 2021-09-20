@@ -156,8 +156,7 @@ contract CrowdSale is Context, Ownable {
     if (_paymentRecord._withdrawalTime == 0) {
       _paymentRecord._withdrawalTime = block.timestamp + (30 * 1 days);
     }
-
-    _withdrawalList[_msgSender()] = _paymentRecord;
+    
     _incrementRecordAmount(_valueAsWei);
     emit TokenSold(_msgSender(), _valueDividedByRate);
   }
