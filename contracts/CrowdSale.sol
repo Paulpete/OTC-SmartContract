@@ -42,6 +42,7 @@ contract CrowdSale is Context, Ownable {
   event CrowdSaleBegun(uint256 startTime, uint256 endTime);
   event CrowdSaleExtended(uint256 newEndTime);
   event CrowdSaleFinalized(uint256 timestamp);
+  event WhiteListedForWithdrawal(address account);
   event TokenSold(address recipient, uint256 amount);
 
   constructor(
@@ -156,8 +157,20 @@ contract CrowdSale is Context, Ownable {
     if (_paymentRecord._withdrawalTime == 0) {
       _paymentRecord._withdrawalTime = block.timestamp + (30 * 1 days);
     }
-    
+
     _incrementRecordAmount(_valueAsWei);
-    emit TokenSold(_msgSender(), _valueDividedByRate);
+    emit WhiteListedForWithdrawal(_msgSender());
+  }
+
+  function withdraw() external returns (bool) {
+    require(
+      _withdrawalList[_msgSender()]._withdrawalTime <= block.timestamp,
+      "CrowdSale: Can only withdraw in 30 days"
+    );
+    require(
+      _token.transfer(_msgSender(), _withdrawalList[_msgSender()]._amount),
+      "CrowdSale: Could not withdraw tokens"
+    );
+    emit TokenSold(_msgSender(), _withdrawalList[_msgSender()]._amount);
   }
 }
