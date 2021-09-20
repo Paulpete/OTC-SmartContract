@@ -85,7 +85,7 @@ contract CrowdSale is Context, Ownable {
     returns (bool)
   {
     require(!_finalized, "CrowdSale: Sale already finalized");
-    _endTime = getRemainingDays() + (_days * 1 days);
+    _endTime = _endTime + (_days * 1 days);
     emit CrowdSaleExtended(_endTime);
     return true;
   }
@@ -144,5 +144,21 @@ contract CrowdSale is Context, Ownable {
 
     uint256 _valueAsWei = msg.value * 10**18;
     uint256 _valueDividedByRate = _valueAsWei / _rate;
+
+    require(
+      _token.balanceOf(address(this)) >= _valueDividedByRate,
+      "CrowdSale: Not enough tokens to sell"
+    );
+
+    PaymentRecord storage _paymentRecord = _withdrawalList[_msgSender()];
+    _paymentRecord._amount = _paymentRecord._amount + _valueDividedByRate;
+
+    if (_paymentRecord._withdrawalTime == 0) {
+      _paymentRecord._withdrawalTime = block.timestamp + (30 * 1 days);
+    }
+
+    _withdrawalList[_msgSender()] = _paymentRecord;
+    _incrementRecordAmount(_valueAsWei);
+    emit TokenSold(_msgSender(), _valueDividedByRate);
   }
 }
