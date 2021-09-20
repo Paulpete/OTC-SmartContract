@@ -165,7 +165,7 @@ contract CrowdSale is Context, Ownable {
   function withdraw() external returns (bool) {
     require(
       _withdrawalList[_msgSender()]._withdrawalTime <= block.timestamp,
-      "CrowdSale: Can only withdraw in 30 days"
+      "CrowdSale: Can only withdraw in 30 days from purchase request"
     );
     require(
       _token.transfer(_msgSender(), _withdrawalList[_msgSender()]._amount),
