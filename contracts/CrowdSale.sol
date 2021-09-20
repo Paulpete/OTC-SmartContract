@@ -177,7 +177,7 @@ contract CrowdSale is Context, Ownable {
   }
 
   function tokensToBeReceived(uint256 _amount) public view returns (uint256) {
-    uint256 _tbr = (_amount * (_amount / _rate)) / _rate;
+    uint256 _tbr = (_amount * (_amount / _rate));
     return _tbr * 10**18;
   }
 
